@@ -370,12 +370,12 @@
     <div class="container">
         <header>
             <h1>⚡ Swing Leading Themes <span class="status" id="status">READY</span></h1>
-            <p class="subtitle">Relative Strength Analysis vs SPY • 60 Thematic ETFs • Finnhub API</p>
+            <p class="subtitle">Relative Strength Analysis vs SPY • 60 Thematic ETFs • Yahoo Finance Data</p>
             <div class="last-updated" id="lastUpdated">Ready to load data</div>
         </header>
 
         <div class="info-box">
-            <strong>⚡ Optimized:</strong> Using Netlify Proxy for stability. All 60 ETFs load in ~90 seconds!
+            <strong>⚡ Optimized:</strong> Market data fetched via server-side proxy. All 60 ETFs load in ~90 seconds!
         </div>
 
         <div class="error-message" id="errorMessage"></div>
@@ -438,9 +438,9 @@
     </div>
 
     <script>
-        // Updated configuration for Netlify Proxy
-        const FINNHUB_API_KEY = 'd62k9dpr01qldki8gkq0d62k9dpr01qldki8gkqg';
-        const FINNHUB_BASE = '/api'; // This routes through netlify.toml
+        // API calls go through the Netlify serverless function proxy
+        // The API key is stored server-side as the FINNHUB_API_KEY environment variable
+        const FINNHUB_BASE = '/api/finnhub';
 
         const ETF_DATA = [
             { ticker: 'XLC', name: 'Communication Services', category: 'Sectors' },
@@ -513,13 +513,15 @@
             const now = Math.floor(Date.now() / 1000);
             const from = now - (90 * 24 * 60 * 60);
             
-            // Clean URL using the /api rewrite
-            const url = `${FINNHUB_BASE}/stock/candle?symbol=${ticker}&resolution=D&from=${from}&to=${now}&token=${FINNHUB_API_KEY}`;
+            const url = `${FINNHUB_BASE}/stock/candle?symbol=${ticker}&resolution=D&from=${from}&to=${now}`;
             
             const response = await fetch(url);
             
             if (!response.ok) {
-                throw new Error(`HTTP Error: ${response.status}`);
+                const errorBody = await response.text();
+                let detail = '';
+                try { detail = JSON.parse(errorBody).error || ''; } catch {}
+                throw new Error(`HTTP ${response.status} for ${ticker}${detail ? ': ' + detail : ''}`);
             }
 
             const data = await response.json();
@@ -527,8 +529,10 @@
             if (data.s !== 'ok' || !data.c) {
                 throw new Error(`No data for ${ticker}`);
             }
-            
-            return data.c.reverse();
+
+            // Filter out null values (Yahoo Finance may return nulls for some days)
+            const closes = data.c.filter(v => v != null);
+            return closes.reverse();
         }
 
         function calculateSMA(data, period) {
@@ -594,7 +598,7 @@
                 const spyPrices = await fetchCandleData('SPY');
                 updateProgress(1, ETF_DATA.length + 1);
                 
-                const delayBetweenCalls = 1100;
+                const delayBetweenCalls = 300;
                 const results = [];
 
                 for (let i = 0; i < ETF_DATA.length; i++) {
@@ -635,7 +639,7 @@
                 
             } catch (error) {
                 console.error('Initial Load Error:', error);
-                showError('⚠️ Error: ' + error.message + '. Ensure netlify.toml is deployed.');
+                showError('⚠️ Error: ' + error.message);
                 statusEl.textContent = 'ERROR';
             } finally {
                 isLoading = false;
