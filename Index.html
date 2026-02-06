@@ -1,0 +1,701 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Swing Leading Themes - Fast Tracker</title>
+    <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;600;700&family=Archivo:wght@400;600;700&display=swap" rel="stylesheet">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        :root {
+            --bg-primary: #0a0a0a;
+            --bg-secondary: #141414;
+            --bg-card: #1a1a1a;
+            --border: #2a2a2a;
+            --text-primary: #ffffff;
+            --text-secondary: #888888;
+            --green-dark: #006400;
+            --green: #00c853;
+            --green-light: rgba(0, 200, 83, 0.3);
+            --red: #ea3943;
+            --red-light: rgba(234, 57, 67, 0.3);
+            --blue: #00a8ff;
+            --gold: #ffd700;
+        }
+
+        body {
+            font-family: 'Archivo', sans-serif;
+            background: var(--bg-primary);
+            color: var(--text-primary);
+            line-height: 1.5;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 1800px;
+            margin: 0 auto;
+        }
+
+        header {
+            margin-bottom: 30px;
+            padding-bottom: 20px;
+            border-bottom: 2px solid var(--border);
+        }
+
+        h1 {
+            font-size: 2.2rem;
+            margin-bottom: 8px;
+            font-weight: 700;
+            letter-spacing: -0.5px;
+        }
+
+        .subtitle {
+            color: var(--text-secondary);
+            font-size: 1rem;
+        }
+
+        .last-updated {
+            color: var(--text-secondary);
+            font-size: 0.85rem;
+            font-family: 'JetBrains Mono', monospace;
+            margin-top: 10px;
+        }
+
+        .status {
+            display: inline-block;
+            padding: 4px 12px;
+            background: var(--green-dark);
+            color: var(--green);
+            border-radius: 4px;
+            font-size: 0.75rem;
+            font-weight: 600;
+            margin-left: 10px;
+        }
+
+        .status.loading {
+            background: rgba(255, 165, 0, 0.2);
+            color: #ffa500;
+        }
+
+        .controls {
+            display: flex;
+            gap: 15px;
+            margin-bottom: 25px;
+            flex-wrap: wrap;
+            align-items: center;
+        }
+
+        .search-box {
+            flex: 1;
+            min-width: 300px;
+            padding: 12px 18px;
+            background: var(--bg-card);
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            color: var(--text-primary);
+            font-size: 0.95rem;
+            font-family: 'Archivo', sans-serif;
+            transition: border-color 0.2s;
+        }
+
+        .search-box:focus {
+            outline: none;
+            border-color: var(--blue);
+        }
+
+        .filter-btn {
+            padding: 11px 22px;
+            background: var(--bg-card);
+            border: 1px solid var(--border);
+            color: var(--text-primary);
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 0.9rem;
+            font-family: 'Archivo', sans-serif;
+            font-weight: 500;
+            transition: all 0.2s;
+        }
+
+        .filter-btn:hover {
+            background: var(--bg-secondary);
+            border-color: var(--blue);
+        }
+
+        .filter-btn.active {
+            background: var(--blue);
+            border-color: var(--blue);
+            color: var(--bg-primary);
+            font-weight: 600;
+        }
+
+        .refresh-btn {
+            padding: 11px 22px;
+            background: var(--green);
+            border: none;
+            color: var(--bg-primary);
+            border-radius: 8px;
+            cursor: pointer;
+            font-weight: 600;
+            font-size: 0.9rem;
+            transition: all 0.2s;
+        }
+
+        .refresh-btn:hover {
+            opacity: 0.9;
+            transform: translateY(-1px);
+        }
+
+        .refresh-btn:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+
+        .progress-bar {
+            height: 4px;
+            background: var(--border);
+            border-radius: 2px;
+            overflow: hidden;
+            margin-bottom: 20px;
+            display: none;
+        }
+
+        .progress-bar.active {
+            display: block;
+        }
+
+        .progress-fill {
+            height: 100%;
+            background: var(--blue);
+            transition: width 0.3s ease;
+        }
+
+        .table-container {
+            background: var(--bg-card);
+            border-radius: 10px;
+            overflow: hidden;
+            border: 1px solid var(--border);
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3);
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+
+        thead {
+            background: var(--bg-secondary);
+            position: sticky;
+            top: 0;
+            z-index: 10;
+        }
+
+        th {
+            padding: 16px 14px;
+            text-align: left;
+            font-weight: 600;
+            font-size: 0.85rem;
+            text-transform: uppercase;
+            letter-spacing: 0.8px;
+            border-bottom: 2px solid var(--border);
+            cursor: pointer;
+            user-select: none;
+            transition: background 0.2s;
+        }
+
+        th:hover {
+            background: rgba(255, 255, 255, 0.05);
+        }
+
+        th.sortable::after {
+            content: ' ⇅';
+            color: var(--text-secondary);
+            font-size: 0.7rem;
+            margin-left: 4px;
+        }
+
+        tbody tr {
+            border-bottom: 1px solid var(--border);
+            transition: background 0.15s;
+        }
+
+        tbody tr:hover {
+            background: var(--bg-secondary);
+        }
+
+        td {
+            padding: 14px;
+            font-size: 0.9rem;
+        }
+
+        .theme-cell {
+            font-weight: 500;
+            max-width: 350px;
+        }
+
+        .ticker-badge {
+            font-family: 'JetBrains Mono', monospace;
+            font-weight: 700;
+            color: var(--blue);
+            font-size: 0.95rem;
+            margin-right: 6px;
+        }
+
+        .star {
+            color: var(--gold);
+            font-size: 1.1rem;
+            margin-left: 6px;
+        }
+
+        .perf-cell {
+            font-family: 'JetBrains Mono', monospace;
+            font-weight: 600;
+            font-size: 0.9rem;
+            text-align: center;
+            padding: 8px;
+            border-radius: 4px;
+        }
+
+        .rank-top3 {
+            background: rgba(0, 100, 0, 0.4);
+            color: var(--green);
+        }
+
+        .rank-top10 {
+            background: rgba(0, 200, 83, 0.2);
+            color: var(--green);
+        }
+
+        .rank-mid {
+            background: rgba(0, 200, 83, 0.1);
+            color: var(--green);
+        }
+
+        .rank-negative {
+            background: rgba(234, 57, 67, 0.3);
+            color: var(--red);
+        }
+
+        .legend {
+            margin-top: 20px;
+            padding: 20px;
+            background: var(--bg-card);
+            border-radius: 8px;
+            border: 1px solid var(--border);
+        }
+
+        .legend h3 {
+            font-size: 1rem;
+            margin-bottom: 12px;
+            font-weight: 600;
+        }
+
+        .legend-items {
+            display: flex;
+            gap: 25px;
+            flex-wrap: wrap;
+            font-size: 0.85rem;
+            color: var(--text-secondary);
+        }
+
+        .legend-item {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .legend-color {
+            width: 30px;
+            height: 18px;
+            border-radius: 3px;
+        }
+
+        .note {
+            margin-top: 20px;
+            padding: 18px;
+            background: var(--bg-card);
+            border-left: 3px solid var(--blue);
+            border-radius: 6px;
+            font-size: 0.88rem;
+            color: var(--text-secondary);
+        }
+
+        .note strong {
+            color: var(--text-primary);
+        }
+
+        .error-message {
+            background: rgba(234, 57, 67, 0.1);
+            border-left: 3px solid var(--red);
+            padding: 15px;
+            border-radius: 6px;
+            margin-bottom: 20px;
+            color: var(--red);
+            display: none;
+        }
+
+        .error-message.active {
+            display: block;
+        }
+
+        .info-box {
+            background: rgba(0, 200, 83, 0.1);
+            border-left: 3px solid var(--green);
+            padding: 15px;
+            border-radius: 6px;
+            margin-bottom: 20px;
+            color: var(--text-secondary);
+        }
+
+        @media (max-width: 768px) {
+            .table-container {
+                overflow-x: auto;
+            }
+
+            table {
+                min-width: 1000px;
+            }
+
+            h1 {
+                font-size: 1.6rem;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>⚡ Swing Leading Themes <span class="status" id="status">READY</span></h1>
+            <p class="subtitle">Relative Strength Analysis vs SPY • 60 Thematic ETFs • Finnhub API</p>
+            <div class="last-updated" id="lastUpdated">Ready to load data</div>
+        </header>
+
+        <div class="info-box">
+            <strong>⚡ Optimized:</strong> Using Netlify Proxy for stability. All 60 ETFs load in ~90 seconds!
+        </div>
+
+        <div class="error-message" id="errorMessage"></div>
+
+        <div class="progress-bar" id="progressBar">
+            <div class="progress-fill" id="progressFill"></div>
+        </div>
+
+        <div class="controls">
+            <input type="text" class="search-box" id="searchBox" placeholder="Search themes, tickers, or categories...">
+            <button class="filter-btn active" data-filter="all">All Themes</button>
+            <button class="filter-btn" data-filter="leaders">Leaders Only</button>
+            <button class="filter-btn" data-filter="stars">⭐ All Positive</button>
+            <button class="refresh-btn" id="refreshBtn" onclick="loadMarketData()">↻ Load Live Data</button>
+        </div>
+
+        <div class="table-container">
+            <table id="etfTable">
+                <thead>
+                    <tr>
+                        <th style="width: 350px;">Theme (Ticker)</th>
+                        <th class="sortable" data-sort="5d" style="width: 120px; text-align: center;">5D Rel</th>
+                        <th class="sortable" data-sort="10d" style="width: 120px; text-align: center;">10D Rel</th>
+                        <th class="sortable" data-sort="21d" style="width: 120px; text-align: center;">21D Rel</th>
+                        <th class="sortable" data-sort="65d" style="width: 120px; text-align: center;">65D Rel</th>
+                        <th class="sortable" data-sort="avg" style="width: 120px; text-align: center;">Avg</th>
+                    </tr>
+                </thead>
+                <tbody id="tableBody">
+                    <tr>
+                        <td colspan="6" style="text-align: center; padding: 40px; color: var(--text-secondary);">
+                            <div>Click "Load Live Data" to fetch real market data from Finnhub</div>
+                        </td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+
+        <div class="legend">
+            <h3>📍 Performance Color Legend</h3>
+            <div class="legend-items">
+                <div class="legend-item">
+                    <div class="legend-color rank-top3"></div>
+                    <span>Top 3</span>
+                </div>
+                <div class="legend-item">
+                    <div class="legend-color rank-top10"></div>
+                    <span>Top 4-10</span>
+                </div>
+                <div class="legend-item">
+                    <div class="legend-color rank-mid"></div>
+                    <span>Top 11+</span>
+                </div>
+                <div class="legend-item">
+                    <div class="legend-color rank-negative"></div>
+                    <span>Negative</span>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Updated configuration for Netlify Proxy
+        const FINNHUB_API_KEY = 'd62k9dpr01qldki8gkq0d62k9dpr01qldki8gkqg';
+        const FINNHUB_BASE = '/api'; // This routes through netlify.toml
+
+        const ETF_DATA = [
+            { ticker: 'XLC', name: 'Communication Services', category: 'Sectors' },
+            { ticker: 'XLY', name: 'Consumer Discretionary', category: 'Sectors' },
+            { ticker: 'XLP', name: 'Consumer Staples', category: 'Sectors' },
+            { ticker: 'XLE', name: 'Energy', category: 'Sectors' },
+            { ticker: 'XLF', name: 'Financials', category: 'Sectors' },
+            { ticker: 'XLV', name: 'Health Care', category: 'Sectors' },
+            { ticker: 'XLI', name: 'Industrials', category: 'Sectors' },
+            { ticker: 'XLB', name: 'Materials', category: 'Sectors' },
+            { ticker: 'XLRE', name: 'Real Estate', category: 'Sectors' },
+            { ticker: 'XLK', name: 'Technology', category: 'Sectors' },
+            { ticker: 'XLU', name: 'Utilities', category: 'Sectors' },
+            { ticker: 'KRE', name: 'Regional Banks', category: 'Financials' },
+            { ticker: 'KBE', name: 'Banks', category: 'Financials' },
+            { ticker: 'SMH', name: 'Semiconductors', category: 'Technology' },
+            { ticker: 'IGV', name: 'Software', category: 'Technology' },
+            { ticker: 'IRBO', name: 'Robotics & AI', category: 'Technology' },
+            { ticker: 'ARTY', name: 'AI Value Chain', category: 'Technology' },
+            { ticker: 'SKYY', name: 'Cloud Computing', category: 'Technology' },
+            { ticker: 'CIBR', name: 'Cybersecurity', category: 'Technology' },
+            { ticker: 'HACK', name: 'Cybersecurity Alt', category: 'Technology' },
+            { ticker: 'FDN', name: 'Internet', category: 'Technology' },
+            { ticker: 'ARKK', name: 'ARK Innovation', category: 'Innovation' },
+            { ticker: 'ARKQ', name: 'Autonomous Tech & Robotics', category: 'Innovation' },
+            { ticker: 'ARKW', name: 'Next Gen Internet', category: 'Innovation' },
+            { ticker: 'ARKG', name: 'Genomics', category: 'Innovation' },
+            { ticker: 'ARKF', name: 'Fintech & Blockchain', category: 'Innovation' },
+            { ticker: 'VUG', name: 'Growth Stocks', category: 'Innovation' },
+            { ticker: 'IBB', name: 'Biotechnology', category: 'Healthcare' },
+            { ticker: 'IHI', name: 'Medical Devices', category: 'Healthcare' },
+            { ticker: 'IPAY', name: 'Digital Payments', category: 'FinTech' },
+            { ticker: 'PAVE', name: 'Infrastructure', category: 'Infrastructure' },
+            { ticker: 'ITB', name: 'Homebuilders', category: 'Infrastructure' },
+            { ticker: 'ITA', name: 'Aerospace & Defense', category: 'Infrastructure' },
+            { ticker: 'XOP', name: 'Oil & Gas Exploration', category: 'Energy' },
+            { ticker: 'TAN', name: 'Solar Energy', category: 'Energy' },
+            { ticker: 'IEO', name: 'Oil & Gas Producers', category: 'Energy' },
+            { ticker: 'GDX', name: 'Gold Miners', category: 'Metals' },
+            { ticker: 'GDXJ', name: 'Junior Gold Miners', category: 'Metals' },
+            { ticker: 'SIL', name: 'Silver Miners', category: 'Metals' },
+            { ticker: 'COPX', name: 'Copper Miners', category: 'Metals' },
+            { ticker: 'URA', name: 'Uranium Miners', category: 'Metals' },
+            { ticker: 'LIT', name: 'Lithium & Battery', category: 'Metals' },
+            { ticker: 'SLX', name: 'Steel', category: 'Metals' },
+            { ticker: 'WGMI', name: 'Bitcoin Mining', category: 'Crypto' },
+            { ticker: 'BITQ', name: 'Crypto Industry', category: 'Crypto' },
+            { ticker: 'IBIT', name: 'Bitcoin Spot', category: 'Crypto' },
+            { ticker: 'XRT', name: 'Retail', category: 'Consumer' },
+            { ticker: 'ESPO', name: 'Video Gaming & eSports', category: 'Entertainment' },
+            { ticker: 'FINX', name: 'FinTech', category: 'FinTech' },
+            { ticker: 'REMX', name: 'Rare Earth Metals', category: 'Metals' },
+            { ticker: 'JETS', name: 'Airlines', category: 'Transportation' },
+            { ticker: 'WOOD', name: 'Timber & Forestry', category: 'Commodities' },
+            { ticker: 'MOO', name: 'Agribusiness', category: 'Agriculture' },
+            { ticker: 'IYT', name: 'Transportation', category: 'Transportation' },
+            { ticker: 'QTUM', name: 'Quantum Computing', category: 'Technology' },
+            { ticker: 'KWEB', name: 'China Internet', category: 'International' },
+            { ticker: 'SOCL', name: 'Social Media', category: 'Technology' },
+            { ticker: 'BJK', name: 'Gaming & Casinos', category: 'Entertainment' }
+        ];
+
+        let marketData = [];
+        let sortColumn = 'avg';
+        let sortDirection = 'desc';
+        let currentFilter = 'all';
+        let isLoading = false;
+
+        async function fetchCandleData(ticker) {
+            const now = Math.floor(Date.now() / 1000);
+            const from = now - (90 * 24 * 60 * 60);
+            
+            // Clean URL using the /api rewrite
+            const url = `${FINNHUB_BASE}/stock/candle?symbol=${ticker}&resolution=D&from=${from}&to=${now}&token=${FINNHUB_API_KEY}`;
+            
+            const response = await fetch(url);
+            
+            if (!response.ok) {
+                throw new Error(`HTTP Error: ${response.status}`);
+            }
+
+            const data = await response.json();
+            
+            if (data.s !== 'ok' || !data.c) {
+                throw new Error(`No data for ${ticker}`);
+            }
+            
+            return data.c.reverse();
+        }
+
+        function calculateSMA(data, period) {
+            if (data.length < period) return data[data.length - 1] || 0;
+            const slice = data.slice(0, period);
+            return slice.reduce((a, b) => a + b, 0) / period;
+        }
+
+        function calculateRelativeStrength(etfPrices, spyPrices, period) {
+            const minLength = Math.min(etfPrices.length, spyPrices.length);
+            const ratios = [];
+            
+            for (let i = 0; i < minLength; i++) {
+                ratios.push(etfPrices[i] / spyPrices[i]);
+            }
+            
+            const sma = calculateSMA(ratios, period);
+            const currentRatio = ratios[0];
+            return ((currentRatio / sma - 1) * 100);
+        }
+
+        function getColorClass(value, rank) {
+            if (value < 0) return 'rank-negative';
+            if (rank < 3) return 'rank-top3';
+            if (rank < 10) return 'rank-top10';
+            return 'rank-mid';
+        }
+
+        function updateProgress(current, total) {
+            const percent = (current / total) * 100;
+            document.getElementById('progressFill').style.width = percent + '%';
+        }
+
+        function showError(message) {
+            const errorEl = document.getElementById('errorMessage');
+            errorEl.textContent = message;
+            errorEl.classList.add('active');
+        }
+
+        function hideError() {
+            document.getElementById('errorMessage').classList.remove('active');
+        }
+
+        async function loadMarketData() {
+            if (isLoading) return;
+            
+            isLoading = true;
+            hideError();
+            const refreshBtn = document.getElementById('refreshBtn');
+            const statusEl = document.getElementById('status');
+            const progressBar = document.getElementById('progressBar');
+            
+            refreshBtn.disabled = true;
+            refreshBtn.textContent = 'Loading...';
+            statusEl.textContent = 'LOADING';
+            statusEl.classList.add('loading');
+            progressBar.classList.add('active');
+
+            try {
+                updateProgress(0, ETF_DATA.length + 1);
+                document.getElementById('lastUpdated').textContent = 'Loading SPY baseline data...';
+                
+                const spyPrices = await fetchCandleData('SPY');
+                updateProgress(1, ETF_DATA.length + 1);
+                
+                const delayBetweenCalls = 1100;
+                const results = [];
+
+                for (let i = 0; i < ETF_DATA.length; i++) {
+                    const etf = ETF_DATA[i];
+                    document.getElementById('lastUpdated').textContent = 
+                        `Loading ${etf.ticker} (${i + 1}/${ETF_DATA.length})...`;
+                    
+                    try {
+                        const etfPrices = await fetchCandleData(etf.ticker);
+                        
+                        const rel5d = calculateRelativeStrength(etfPrices, spyPrices, 5);
+                        const rel10d = calculateRelativeStrength(etfPrices, spyPrices, 10);
+                        const rel21d = calculateRelativeStrength(etfPrices, spyPrices, 21);
+                        const rel65d = calculateRelativeStrength(etfPrices, spyPrices, 65);
+                        const avg = (rel5d + rel10d + rel21d + rel65d) / 4;
+
+                        results.push({
+                            ...etf,
+                            rel5d, rel10d, rel21d, rel65d, avg,
+                            allPositive: rel5d > 0 && rel10d > 0 && rel21d > 0 && rel65d > 0
+                        });
+
+                        updateProgress(i + 2, ETF_DATA.length + 1);
+                        await new Promise(resolve => setTimeout(resolve, delayBetweenCalls));
+                    } catch (error) {
+                        console.error(`Error loading ${etf.ticker}:`, error);
+                        results.push({ ...etf, rel5d: 0, rel10d: 0, rel21d: 0, rel65d: 0, avg: 0, error: true });
+                    }
+                }
+
+                marketData = results;
+                renderTable();
+                
+                statusEl.textContent = 'LIVE';
+                statusEl.classList.remove('loading');
+                document.getElementById('lastUpdated').textContent = 
+                    `✅ Updated: ${new Date().toLocaleTimeString()}`;
+                
+            } catch (error) {
+                console.error('Initial Load Error:', error);
+                showError('⚠️ Error: ' + error.message + '. Ensure netlify.toml is deployed.');
+                statusEl.textContent = 'ERROR';
+            } finally {
+                isLoading = false;
+                refreshBtn.disabled = false;
+                refreshBtn.textContent = '↻ Refresh Data';
+                progressBar.classList.remove('active');
+            }
+        }
+
+        function renderTable() {
+            let data = [...marketData];
+
+            const searchTerm = document.getElementById('searchBox').value.toLowerCase();
+            if (searchTerm) {
+                data = data.filter(etf =>
+                    etf.ticker.toLowerCase().includes(searchTerm) ||
+                    etf.name.toLowerCase().includes(searchTerm)
+                );
+            }
+
+            if (currentFilter === 'leaders') data = data.filter(etf => etf.avg > 0);
+            else if (currentFilter === 'stars') data = data.filter(etf => etf.allPositive);
+
+            data.sort((a, b) => {
+                const valA = a[sortColumn] || a.avg;
+                const valB = b[sortColumn] || b.avg;
+                return sortDirection === 'desc' ? valB - valA : valA - valB;
+            });
+
+            const tbody = document.getElementById('tableBody');
+            tbody.innerHTML = data.map((etf, index) => `
+                <tr>
+                    <td class="theme-cell"><span class="ticker-badge">${etf.ticker}</span>${etf.name}${etf.allPositive ? ' ⭐' : ''}</td>
+                    <td class="perf-cell ${getColorClass(etf.rel5d, 99)}">${etf.rel5d.toFixed(1)}%</td>
+                    <td class="perf-cell ${getColorClass(etf.rel10d, 99)}">${etf.rel10d.toFixed(1)}%</td>
+                    <td class="perf-cell ${getColorClass(etf.rel21d, 99)}">${etf.rel21d.toFixed(1)}%</td>
+                    <td class="perf-cell ${getColorClass(etf.rel65d, 99)}">${etf.rel65d.toFixed(1)}%</td>
+                    <td class="perf-cell ${getColorClass(etf.avg, index)}">${etf.avg.toFixed(1)}%</td>
+                </tr>
+            `).join('');
+        }
+
+        document.querySelectorAll('.sortable').forEach(th => {
+            th.addEventListener('click', () => {
+                sortDirection = (sortColumn === th.dataset.sort && sortDirection === 'desc') ? 'asc' : 'desc';
+                sortColumn = th.dataset.sort;
+                renderTable();
+            });
+        });
+
+        document.querySelectorAll('.filter-btn').forEach(btn => {
+            btn.addEventListener('click', () => {
+                document.querySelectorAll('.filter-btn').forEach(b => b.classList.remove('active'));
+                btn.classList.add('active');
+                currentFilter = btn.dataset.filter;
+                renderTable();
+            });
+        });
+
+        document.getElementById('searchBox').addEventListener('input', renderTable);
+    </script>
+</body>
+</html>
